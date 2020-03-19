@@ -1,3 +1,6 @@
+# Perform random forests imputation of FIA plot data
+# written by Isaac Grenfell
+
 library(yaImpute)
 library(raster)
 library(rgdal)
@@ -7,20 +10,21 @@ library(foreach)
 library(doParallel)
 
 
-###Change this!
+###Change this to match current directory and path
 cur.zone <- "z1"
 outfolder <- cur.zone
 
 setwd("F:\\Tree_List_c2012\\FIA\\working_KLR")
 meters.db <- read.dbf("FIA_LFRDB_Albers.dbf")
 
-###Change this!
+###Change this to match current directory and path
 setwd(paste("F:\\Tree_List_c2014\\target_data\\final\\", outfolder, sep=""))
 list.files()
 
 cwd <- getwd()
 flist.tif <- Sys.glob("*.tif")
 
+# Create raster stack of input target grids
 raster.stack <- stack(flist.tif)
 p4s.albers <- proj4string(raster.stack)
 raster.list <- vector("list", length(flist.tif))
@@ -30,26 +34,21 @@ for(i in 1:length(flist.tif))
   raster.list[[i]] <- raster()  
 }
 
-###Extraxt values about training points
+###Extract values about training points
 nfiles.raster <- length(flist.tif)
 
-###Change this!
-##setwd("C:\\karin\\tree_list_c2012\\z58")
-##plot.df <- read.table("z58_x_table_LFRDB_reclass.txt", sep = ",", header = T)
-
+# Read in x table of reference data
 allplot <- read.table("F:\\Tree_List_c2014\\x_table\\x_table_final_EVG_Karin_reclass_plus_loblolly_manual.txt", header=T, sep=",")
 remap <- read.table(paste("F:\\Tree_List_c2014\\target_data\\working_KLR\\EVG_remap\\", cur.zone, "_EVG_remap.txt", sep=""), sep=":")
 
-#Limit allplot to just the veg types in the remap table
+#Limit allplot to just the veg types in the zone remap table
 plot.df <- allplot[allplot$EVT_GP %in% remap$V1,]
 dim(plot.df)
 
-###Change this!
+###Change this to match current directory and path
 dir.create(paste("F:\\Tree_List_c2014\\outputs\\", cur.zone, "_disturb", sep=""))
 plot.df$CN <- factor(plot.df$CN)
 write.csv(plot.df, paste("F:\\Tree_List_c2014\\outputs\\", cur.zone, "_disturb\\", cur.zone, "_x_table_allplots_reclass.txt", sep=""), row.names = F)
-##plot.df$CN <- as.numeric(plot.df$CN)
-# Karin commented out above because it was changing CN)
 
 merge.df <- merge(plot.df, meters.db, by = "CN")
 
@@ -71,11 +70,10 @@ plot.df$POINT_X <- merge.df$POINT_X
 plot.df$POINT_Y <- merge.df$POINT_Y
 
 
-###Change this!
+###Change this to match current directory and path
 setwd(paste("F:\\Tree_List_c2014\\target_data\\final\\", outfolder, sep=""))
 
 ####Reclass evgs
-##evg.reclass <- read.table(paste(cur.zone, "_remap.txt", sep=""), sep=":")
 evg.reclass <- remap
 n.evgs <- dim(evg.reclass)[1]
 
@@ -141,10 +139,6 @@ x.raster.out <- raster(x.mat)
 x.raster.out@extent <-dem.raster@extent
 x.raster.out@crs <-dem.raster@crs
 
-#setwd("F:\\Tree_List_c2012\\z19_test")
-#fout <- paste(cur.zone, "x-coord.tif", sep="")
-#writeRaster(x.raster.out, fout, overwrite=TRUE)
-
 y.vec <- coords.all[,2]
 y.mat <- matrix(y.vec, nrow=nrows.out)
 
@@ -152,10 +146,7 @@ y.raster.out <- raster(y.mat)
 y.raster.out@extent <-dem.raster@extent
 y.raster.out@crs <-dem.raster@crs
 
-#setwd("F:\\Tree_List_c2012\\z19_test")
-#fout <- paste(cur.zone, "y-coord.tif", sep="")
-#writeRaster(y.raster.out, fout, overwrite=TRUE)
-
+# Perform imputation
 impute.row <- function(currow)  
 {  
   library(yaImpute) 
@@ -170,12 +161,7 @@ impute.row <- function(currow)
   
   colseq <- 1:length(extract.currow[,1])
   valid.cols <- colseq[as.logical(1-is.na(extract.currow[,1]))]
-  # tempname <- paste(cur.zone,"slp_1_2", sep =   "")
-  #colseq <- 1:length(currow.vals)
-  #valid.cols <- colseq[as.logical(1-is.na(extract.currow[,1]))]
   ncols.df <- dim(extract.currow)[2]
-  # invalid.cols <- colseq[as.logical(is.na(extract.currow[,1]))]
-  #extract.currow[invalid.cols,] <- rep(1, ncols.df)
   extract.currow <- data.frame(extract.currow)
   extract.currow$"POINT_X" <- sp.currow$x
   extract.currow$"POINT_Y" <-sp.currow$y
@@ -195,7 +181,6 @@ impute.row <- function(currow)
   
   #get nonappearing evgs   
   evg.orig <- 1:n.evgs 
-  #evg.orig <- as.numeric(levels(evg.in))
   evg.val <- evg.orig  
   evg.val.temp <- X.df.temp$'EVT_GP'  
   n.evgs.orig <- length(sort(unique(evg.orig)))  
@@ -217,14 +202,11 @@ impute.row <- function(currow)
   n.rows.orig <- dim(extract.currow)[1]	  
   temp.fac <- factor(X.df.temp$'EVT_GP', levels = levels(evg.in))  
   dc.code.fac.temp <- factor( X.df.temp$disturb_code, levels=lev.dc)  
-  #dc.year.fac.temp <- factor( X.df.temp$disturb_year, levels=lev.year)  
   
   X.df.temp$'EVT_GP' <- as.factor(temp.fac)  
   X.df.temp$disturb_code <- dc.code.fac.temp   
-  #X.df.temp$disturb_year <- dc.year.fac   
   nrow.temp <- dim(X.df.temp)[1]  
   impute.out <- rep(-1, nrow.temp)  
-  #X.df.temp <- X.df.temp[,-c(12, 13)]  
   
   nc.orig <- dim(coords.currow)[1]  
   impute.out <- rep(NA,nc.orig)  
@@ -234,9 +216,6 @@ impute.row <- function(currow)
     colseq.out <- 1:dim(X.df.temp)[1]    
     rownames.all <- colseq.out+maxrow    
     rownames(X.df.temp) <- paste("T-", rownames.all)    
-    #rownames(X.df.temp) <- rownames.all[valid.cols]    
-    #names(X.df.temp) <- names(X.df)    
-    #temp.yai <- impute(yai.treelist, ancilliaryData = X.df.valid)
     
     # take object from formed random forests model and use X.df.temp dataframe to make predictions    
     temp.newtargs <- newtargets(yai.treelist, newdata = X.df.temp)    
@@ -251,21 +230,13 @@ impute.row <- function(currow)
   return(impute.out)  
 }
 
-#mat.test.out <- matrix(NA, nrow=nrows.out, ncol=ncols.out)
-
 cl <- makeCluster(20, port="10187")
 registerDoParallel(cl)
 
 mout <- foreach(m = 1:nrows.out, .packages = c("raster", "rgdal", "yaImpute"), .combine="rbind") %dopar%   impute.row(m)
 
-#mout <- foreach(m =6500:6579, .packages = c("raster", "rgdal", "yaImpute"), .combine="rbind") %dopar%   impute.row(m)
-
 stopCluster(cl)
 closeAllConnections()
-
-#mout.test <- mout
-#mat.test.out[6500:6579,] <- mout
-#mout <- mat.test.out
 
 ###this will return a matrix, all thats left is to write it out as a raster
 
@@ -279,24 +250,3 @@ m.raster.out@crs <-dem.raster@crs
 setwd(paste("F:\\Tree_List_c2014\\outputs\\", cur.zone, "_disturb", sep=""))
 fout <- paste(cur.zone, "_index-yes-disturb.tif", sep="")
 writeRaster(m.raster.out, fout, overwrite=TRUE)
-
-## extract row functions is.na aslogical(1-NA) aspectvector[valid values] <- list
-## how to assign elements of a raster google
-## read in row of a dummy raster, the na check, assign values  
-
-##r<-raster("F:\\Tree_List_c2012\\Joe\\z19\\renamed grids\\ASPECT.tif")
-##dim(r)
-##for (j in 1:dim(r)[[1]])
-##{
-##temprow <- 1-is.na(r[j,])
-##numelements <- sum(temprow)
-##length(temprow)
-##length(mout[[2]])
-
-# do number of elements in current row match number of elements in mout?
-
-##datavals <- which(temprow=="TRUE")
-##temprow[datavals] <- mout[[j]]
-##r[j] <- temprow
-##}
-##}
