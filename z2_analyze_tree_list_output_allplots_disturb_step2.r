@@ -44,7 +44,7 @@ evcmat2 <- cbind(evcmat, accuracy3)
 evcmat2 <- rbind(evcmat2, c(accuracy4, -99))
 row.names(evcmat2) <- c(evcvec, "accuracy")
 colnames(evcmat2) <- c(evcvec, "accuracy")
-# calculate overall accuracy = 96% ! 
+# calculate overall accuracy 
 evcmat2[dim(evcmat2)[[1]], dim(evcmat2)[[2]]]  <- (evcmat2[1,1] + evcmat2[2,2] + evcmat2[3,3] + evcmat2[4,4] + evcmat2[5,5] + evcmat2[6,6] + evcmat2[7,7] + evcmat2[8,8] + evcmat2[9,9])/sum(evcmat)
 write.table(evcmat2, paste(curfolder, "\\", curzone, "_EVC_confusion_matrix.txt", sep=""))
 # bar chart
@@ -97,7 +97,7 @@ for(i in 1:length(evhvec))
 }
 evhmat2 <- cbind(evhmat, accuracy3)
 evhmat2 <- rbind(evhmat2, c(accuracy4, -99))
-# calculate overall accuracy = 99.7% ! 
+# calculate overall accuracy
 evhmat2[dim(evhmat2)[[1]], dim(evhmat2)[[2]]]  <- (evhmat2[1,1] + evhmat2[2,2] + evhmat2[3,3] + evhmat2[4,4] + evhmat2[5,5])/sum(evhmat)
 write.table(evhmat2, paste(curfolder, "\\", curzone, "_EVH_confusion_matrix.txt", sep=""))
 # bar chart
@@ -158,7 +158,7 @@ for(i in 1:length(evgvec))
 }
 evgmat2 <- cbind(evgmat, accuracy3)
 evgmat2 <- rbind(evgmat2, c(accuracy4, -99))
-# calculate overall accuracy = 92% ! 
+# calculate overall accuracy 
 evgmat2[dim(evgmat2)[[1]], dim(evgmat2)[[2]]]  <- sum1/sum(evgmat)
 write.table(evgmat2, paste(curfolder, "\\", curzone, "_EVG_confusion_matrix.txt", sep=""))
 # bar chart
@@ -212,7 +212,7 @@ for(i in 1:length(dcvec))
 }
 dcmat2 <- cbind(dcmat, accuracy3)
 dcmat2 <- rbind(dcmat2, c(accuracy4, -99))
-# calculate overall accuracy = 72.5%  
+# calculate overall accuracy
 dcmat2[dim(dcmat2)[[1]], dim(dcmat2)[[2]]]  <- (dcmat2[1,1] + dcmat2[2,2] + dcmat2[3,3])/sum(dcmat)
 write.table(dcmat2, paste(curfolder, "\\", curzone, "_disturb_code_confusion_matrix.txt", sep=""))
 # bar chart
@@ -266,7 +266,7 @@ for(i in 1:length(dyvec))
 }
 dymat2 <- cbind(dymat, accuracy3)
 dymat2 <- rbind(dymat2, c(accuracy4, -99))
-# calculate overall accuracy = 72.5%  
+# calculate overall accuracy
 dymat2[dim(dymat2)[[1]], dim(dymat2)[[2]]]  <- (dymat2[1,1] + dymat2[2,2] + dymat2[3,3] + dymat2[4,4] + dymat2[5,5] + dymat2[6,6] + dymat2[7,7] + dymat2[8,8] + dymat2[9,9] + dymat2[10,10] + dymat2[11,11] + dymat2[12,12] + dymat2[13,13] + dymat2[14,14] + dymat2[15,15] + dymat2[16,16] + dymat2[17,17])/sum(dymat)
 write.table(dymat2, paste(curfolder, "\\", curzone, "_disturb_year_confusion_matrix.txt", sep=""))
 # bar chart
